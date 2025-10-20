@@ -67,7 +67,7 @@ export default function Home() {
                 <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-[#FF0000]"></div>
               </h1>
               <p className="mt-8 text-xl leading-8 text-gray-300 max-w-2xl mx-auto">
-                Transform lengthy YouTube videos into concise, intelligent summaries powered by AI.
+                Instantly transform lengthy YouTube videos into precise, actionable summaries—recipe ingredients, step-by-step tutorials, or study notes—so you can skip the fluff and start your task smarter and faster with AI-powered clarity.
               </p>
             </div>
           </div>
