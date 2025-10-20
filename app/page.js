@@ -1,10 +1,19 @@
-'use client'; // This directive is necessary for using hooks like useState
+'use client';
 
 import { useState } from 'react';
+
+// Helper function to convert simple markdown to HTML
+const formatMarkdownToHtml = (text) => {
+  if (!text) return '';
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+    .replace(/\n/g, '<br />');                       // Newlines
+};
 
 export default function Home() {
   const [videoUrl, setVideoUrl] = useState('');
   const [summary, setSummary] = useState('');
+  const [classification, setClassification] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -12,6 +21,7 @@ export default function Home() {
     e.preventDefault();
     setIsLoading(true);
     setSummary('');
+    setClassification('');
     setError('');
 
     try {
@@ -29,6 +39,7 @@ export default function Home() {
         throw new Error(data.error || 'An unexpected error occurred.');
       }
 
+      setClassification(data.classification);
       setSummary(data.summary);
 
     } catch (err) {
@@ -42,10 +53,10 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center p-12 md:p-24">
       <div className="z-10 w-full max-w-2xl items-center justify-between text-center">
         <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
-          YouTube Video Summarizer
+          YouTube Smart Summarizer
         </h1>
         <p className="mt-6 text-lg leading-8 text-gray-300">
-          Paste a YouTube video URL below to get a quick summary of its key points using AI.
+          Paste a YouTube URL to get a perfectly formatted, structured summary based on its content.
         </p>
       </div>
 
@@ -67,7 +78,7 @@ export default function Home() {
               className="rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               disabled={isLoading}
             >
-              {isLoading ? 'Summarizing...' : 'Get Summary'}
+              {isLoading ? 'Summarizing...' : 'Generate Summary'}
             </button>
           </div>
         </form>
@@ -79,13 +90,19 @@ export default function Home() {
         </div>
       )}
 
-      {summary && (
-        <div className="w-full max-w-2xl mt-8 p-6 bg-gray-800/50 border border-gray-700 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4 text-white">Summary</h2>
-          <div 
-            className="prose prose-invert text-gray-300 whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: summary.replace(/\n/g, '<br />') }}
-          />
+      {!isLoading && summary && (
+        <div className="w-full max-w-2xl mt-8">
+          <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg shadow-lg mb-6">
+            <h2 className="text-sm font-semibold uppercase text-gray-400 mb-2">Detected Content Type</h2>
+            <p className="text-2xl font-bold text-indigo-400">{classification}</p>
+          </div>
+          
+          <div className="p-6 bg-gray-800/50 border border-gray-700 rounded-lg shadow-lg">
+            <div 
+              className="prose prose-invert text-gray-300 whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{ __html: formatMarkdownToHtml(summary) }}
+            />
+          </div>
         </div>
       )}
     </main>
