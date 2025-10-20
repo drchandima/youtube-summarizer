@@ -267,5 +267,6 @@ Format the output as follows:
 - Extract ONLY information present in the content - do not add assumptions
 - If information is missing (like time, difficulty), omit that section
 
+You should always output English text. If any content is in language other than English, translate it to English.
 Now generate the formatted summary:`;
 }
