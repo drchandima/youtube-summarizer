@@ -1,19 +1,16 @@
 import YouTube from 'youtubei.js';
 import Groq from 'groq-sdk';
-import { exec } from 'child_process';
-import util from 'util';
 
-const execPromise = util.promisify(exec);
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// Add this new function for description extraction
-async function getVideoDescription(videoId) {
+async function getVideoMetadata(videoUrl) {
   try {
-    const command = `yt-dlp --skip-download --get-description https://www.youtube.com/watch?v=${videoId}`;
-    const { stdout } = await execPromise(command);
-    return stdout.trim();
+    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
+    const response = await fetch(oembedUrl);
+    if (!response.ok) throw new Error('Failed to fetch video metadata');
+    return await response.json();
   } catch (error) {
-    console.error('Error getting video description:', error);
+    console.error('Error fetching video metadata:', error);
     return null;
   }
 }
@@ -29,14 +26,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Fetch video metadata using oEmbed
-    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
-    const oembedResponse = await fetch(oembedUrl);
-    const videoMetadata = await oembedResponse.json();
-
     const videoId = extractVideoId(videoUrl);
     if (!videoId) {
       return res.status(400).json({ error: 'Invalid YouTube URL provided.' });
+    }
+
+    // Get video metadata first
+    const metadata = await getVideoMetadata(videoUrl);
+    if (!metadata) {
+      return res.status(400).json({ error: 'Could not fetch video metadata.' });
     }
 
     // Step 1: Get the transcript
@@ -51,20 +49,15 @@ export default async function handler(req, res) {
     // Step 3: Generate the formatted summary using Prompt 2
     const summary = await formatSummary(classification, transcriptText);
 
-    // Add description fetching
-    const description = await getVideoDescription(videoId);
-
-    // Step 4: Send all results to the frontend
+    // Step 4: Send both results to the frontend
     res.status(200).json({ 
       classification, 
       summary,
       videoMetadata: {
-        title: videoMetadata.title,
-        author: videoMetadata.author_name,
-        thumbnail: videoMetadata.thumbnail_url,
-        description: description || 'No description available'
-      },
-      videoUrl 
+        title: metadata.title,
+        author: metadata.author_name,
+        thumbnail: metadata.thumbnail_url
+      }
     });
 
   } catch (error) {
